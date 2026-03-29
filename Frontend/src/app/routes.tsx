@@ -7,6 +7,7 @@ import { ExpenseDetail } from "./pages/ExpenseDetail"
 import { ApprovalPage } from "./pages/Approval"
 import { Login } from "./pages/Login"
 import { Signup } from "./pages/Signup"
+import { AdminDashboard } from "./pages/AdminDashboard"
 
 export const router = createBrowserRouter([
   { path: "/login", Component: Login },
@@ -20,6 +21,7 @@ export const router = createBrowserRouter([
       { path: "expenses", Component: MyExpenses },
       { path: "expenses/:id", Component: ExpenseDetail },
       { path: "approvals", Component: ApprovalPage },
+      { path: "admin", Component: AdminDashboard },
       { path: "*", Component: () => <div className="p-8 text-center text-slate-500">Page not found</div> },
     ],
   },
