@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id           String   @id @default(uuid())
+  name         String?
+  baseCurrency String // Set from Country Selection
+  createdAt    DateTime @default(now())
+  users        User[]
+}
+
+model User {
+  id           String @id @default(uuid())
+  name         String
+  email        String @unique
+  passwordHash String
+  role         Role   @default(EMPLOYEE)
+  country      String
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  managerId String?
+  manager   User?   @relation("ManagerToEmployee", fields: [managerId], references: [id])
+  employees User[]  @relation("ManagerToEmployee")
+
+  expenses Expense[]      @relation("UserExpenses")
+  rules    ApprovalRule[] @relation("UserRules") // Rules targeting this user
+
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  EMPLOYEE
+}
+
+model Expense {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation("UserExpenses", fields: [userId], references: [id])
+
+  amount          Float
+  spentCurrency   String
+  convertedAmount Float? // Set iteratively by manager view logic
+
+  category    String
+  description String?
+  date        DateTime
+  receiptUrl  String?
+  ocrData     Json? // Full payload matched by OCR
+
+  status ExpenseStatus @default(DRAFT)
+
+  history          ExpenseHistory[]
+  approvalRequests ApprovalRequest[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum ExpenseStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+}
+
+model ExpenseHistory {
+  id        String  @id @default(uuid())
+  expenseId String
+  expense   Expense @relation(fields: [expenseId], references: [id])
+
+  actionBy String // Name or ID of user who took action
+  action   String // e.g. "Submitted", "Approved", "Rejected"
+  comments String?
+
+  timestamp DateTime @default(now())
+}
+
+model ApprovalRule {
+  id     String @id @default(uuid())
+  userId String @unique // One rule set per user
+  user   User   @relation("UserRules", fields: [userId], references: [id])
+
+  description       String?
+  isManagerApprover Boolean @default(true) // Goes to manager first if true
+  managerOverrideId String? // Proxy manager ID if different from DB
+
+  flowType              FlowType @default(SEQUENTIAL)
+  minApprovalPercentage Float    @default(100.0) // E.g., 60 means 60%
+
+  approvers RuleApprover[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum FlowType {
+  SEQUENTIAL
+  PARALLEL
+}
+
+model RuleApprover {
+  id     String       @id @default(uuid())
+  ruleId String
+  rule   ApprovalRule @relation(fields: [ruleId], references: [id])
+
+  approverId    String // User ID of the approver
+  isRequired    Boolean @default(false)
+  sequenceOrder Int     @default(0) // Determines order if SEQUENTIAL flow
+}
+
+model ApprovalRequest {
+  id        String  @id @default(uuid())
+  expenseId String
+  expense   Expense @relation(fields: [expenseId], references: [id])
+
+  approverId    String // Who needs to approve
+  status        RequestStatus @default(PENDING) // Read-only logic hooks into this
+  sequenceOrder Int           @default(0) // When it triggers
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
