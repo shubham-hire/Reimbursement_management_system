@@ -1,4 +1,5 @@
 version: '3.8'
+
 services:
   db:
     image: postgres:15
@@ -8,9 +9,43 @@ services:
       POSTGRES_PASSWORD: password123
       POSTGRES_DB: reimbursement_dev
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: reimbursement_backend
+    ports:
+      - "5000:5000"
+    environment:
+      DATABASE_URL: postgresql://admin:password123@db:5432/reimbursement_dev
+      PORT: 5000
+      JWT_SECRET: supersecretkey_change_in_production
+    depends_on:
+      - db
+    volumes:
+      - ./Backend:/usr/src/app
+      - /usr/src/app/node_modules
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    container_name: reimbursement_frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ./Frontend:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      - backend
     restart: unless-stopped
 
 volumes:

@@ -7,7 +7,8 @@ import {
   CheckSquare, 
   LogOut, 
   Bell, 
-  Search 
+  Search,
+  Settings,
 } from "lucide-react"
 import { mockUser } from "../mockData"
 
@@ -16,6 +17,7 @@ const navItems = [
   { icon: Receipt, label: "Submit Expense", path: "/submit" },
   { icon: ListOrdered, label: "My Expenses", path: "/expenses" },
   { icon: CheckSquare, label: "Approvals", path: "/approvals" },
+  { icon: Settings, label: "Admin Settings", path: "/admin" },
 ]
 
 export function Layout() {
