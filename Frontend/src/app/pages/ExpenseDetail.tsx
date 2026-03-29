@@ -13,11 +13,12 @@ import {
   XCircle,
   Building,
   Calendar,
-  Tag
+  Tag,
+  Image as ImageIcon
 } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card"
-import { Badge } from "../components/ui/Badge"
-import { Button } from "../components/ui/Button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
+import { Badge } from "../components/ui/badge"
+import { Button } from "../components/ui/button"
 import { Textarea } from "../components/ui/textarea"
 import { mockExpenses } from "../mockData"
 
@@ -43,11 +44,27 @@ export function ExpenseDetail() {
   const navigate = useNavigate()
   
   // Use mock data or fallback
-  const expense = mockExpenses.find(e => e.id === id) || mockExpenses[0]
+  const baseExpense = mockExpenses.find(e => e.id === id) || mockExpenses[0];
+
+  // Local state to simulate strict post-action locks
+  const [expense, setExpense] = React.useState(baseExpense);
+  const [commentText, setCommentText] = React.useState("");
+
+  const handleAction = (actionType: "Approved" | "Rejected") => {
+    // In our phase 3 integration, we would POST to /api/expenses/:id/action with { action: actionType, comments: commentText }
+    // For now, simulate locally to show strictly locking UI.
+    setExpense(prev => ({
+      ...prev,
+      status: actionType
+    }));
+  };
+
+  // Mock receipt image for dev 3 instruction demo
+  const MOCK_RECEIPT_URL = "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&q=80";
 
   return (
     <motion.div 
-      className="max-w-5xl mx-auto space-y-6 pb-12"
+      className="max-w-7xl mx-auto space-y-6 pb-12"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
@@ -87,7 +104,7 @@ export function ExpenseDetail() {
         </div>
       </motion.div>
 
-      {expense.escalated && (
+      {expense.escalated && expense.status === "Pending" && (
         <motion.div variants={itemVariants} className="bg-rose-50 border border-rose-200 p-4 rounded-xl flex items-start shadow-sm relative overflow-hidden">
           <div className="absolute top-0 left-0 w-1.5 h-full bg-rose-500"></div>
           <AlertCircle className="w-5 h-5 text-rose-600 mr-3 mt-0.5 shrink-0" />
@@ -98,26 +115,15 @@ export function ExpenseDetail() {
         </motion.div>
       )}
 
-      <motion.div variants={itemVariants} className="grid gap-6 md:grid-cols-3 items-start">
+      <motion.div variants={itemVariants} className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 items-start">
         {/* Main Details */}
-        <div className="md:col-span-2 space-y-6">
+        <div className="md:col-span-1 lg:col-span-2 space-y-6">
           <Card className="overflow-hidden border-slate-200/60 shadow-sm hover:shadow-md transition-shadow duration-300">
             <div className="bg-gradient-to-r from-slate-50 to-white border-b border-slate-100 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
               <div>
                 <p className="text-sm font-semibold text-slate-500 mb-1 uppercase tracking-wider">Total Request Amount</p>
                 <div className="text-4xl font-black tracking-tight text-slate-900">${expense.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
               </div>
-              
-              {expense.status === "Pending" && (
-                <div className="flex gap-3 w-full md:w-auto">
-                  <Button className="flex-1 bg-indigo-600 hover:bg-indigo-700 shadow-sm font-semibold px-6 rounded-full">
-                    <CheckCircle2 className="w-4 h-4 mr-2" /> Approve
-                  </Button>
-                  <Button variant="outline" className="flex-1 border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300 font-semibold transition-colors px-6 rounded-full">
-                    <XCircle className="w-4 h-4 mr-2" /> Reject
-                  </Button>
-                </div>
-              )}
             </div>
             
             <CardContent className="p-8">
@@ -149,21 +155,77 @@ export function ExpenseDetail() {
                 </div>
               </div>
 
-              <div className="mt-8 pt-8 border-t border-slate-100">
-                <h3 className="text-lg font-bold text-slate-900 mb-4">Add Comment</h3>
-                <Textarea placeholder="Type your message here. Managers and employees will see this." className="min-h-[100px] mb-3 bg-slate-50 focus-visible:ring-indigo-500 font-medium" />
-                <div className="flex justify-end">
-                  <Button variant="secondary" className="bg-slate-100 text-slate-700 hover:bg-slate-200 font-semibold rounded-full">
-                    <MessageSquare className="w-4 h-4 mr-2" /> Post Comment
-                  </Button>
+              {/* Functional Approval Comment Box */}
+              {expense.status === "Pending" ? (
+                <div className="mt-8 pt-8 border-t border-slate-100">
+                  <h3 className="text-lg font-bold text-slate-900 mb-4">Manager Action</h3>
+                  <Textarea 
+                    placeholder="Enter approval or rejection comments here..." 
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    className="min-h-[100px] mb-4 bg-slate-50 focus-visible:ring-indigo-500 font-medium" 
+                  />
+                  <div className="flex gap-4 w-full justify-end">
+                    <Button 
+                      onClick={() => handleAction("Approved")}
+                      className="bg-indigo-600 hover:bg-indigo-700 shadow-sm font-semibold px-6 rounded-full"
+                    >
+                      <CheckCircle2 className="w-4 h-4 mr-2" /> Approve Request
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => handleAction("Rejected")}
+                      className="border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300 font-semibold transition-colors px-6 rounded-full"
+                    >
+                      <XCircle className="w-4 h-4 mr-2" /> Reject Request
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="mt-8 pt-6 border-t border-slate-100">
+                  <div className={`p-4 rounded-xl flex items-start gap-4 ${expense.status === 'Approved' ? 'bg-emerald-50' : 'bg-rose-50'}`}>
+                    {expense.status === 'Approved' ? 
+                      <CheckCircle2 className="w-5 h-5 text-emerald-600 mt-0.5" /> : 
+                      <XCircle className="w-5 h-5 text-rose-600 mt-0.5" />
+                    }
+                    <div>
+                      <h4 className={`text-sm font-bold ${expense.status === 'Approved' ? 'text-emerald-800' : 'text-rose-800'}`}>
+                        {expense.status} by Manager
+                      </h4>
+                      <p className={`text-sm mt-1 font-medium ${expense.status === 'Approved' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                        Action has been finalized and locked. {commentText ? `Comment: "${commentText}"` : ''}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-6">
+        <div className="space-y-6 md:col-span-1">
+          {/* Mockup Receipt View */}
+          <Card className="border-slate-200/60 shadow-sm">
+            <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
+              <CardTitle className="text-base flex items-center gap-2">
+                <ImageIcon className="w-4 h-4 text-indigo-500" /> Scanned Receipt
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 flex flex-col items-center">
+              <div className="relative w-full aspect-[3/4] rounded-lg overflow-hidden border border-slate-200 bg-slate-100">
+                <img 
+                  src={MOCK_RECEIPT_URL} 
+                  alt="Receipt Scan" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <Button variant="ghost" size="sm" className="mt-4 w-full text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50">
+                View Full Image
+              </Button>
+            </CardContent>
+          </Card>
+
           <Card className="border-slate-200/60 shadow-sm">
             <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
               <CardTitle className="text-base flex items-center gap-2">
@@ -190,20 +252,19 @@ export function ExpenseDetail() {
                   <div className="pl-6">
                     <p className="text-sm font-bold text-slate-900">Manager Review Pending</p>
                     <p className="text-xs text-slate-500 font-medium mt-0.5">{expense.date} at 09:45 AM</p>
-                    <p className="text-sm text-slate-600 mt-2 font-medium">Assigned to David Chen</p>
+                    <p className="text-sm text-slate-600 mt-2 font-medium">Assigned to Manager Queue</p>
                   </div>
                 </div>
 
-                {expense.escalated && (
+                {expense.status !== "Pending" && (
                   <div className="relative">
-                    <div className="absolute -left-3.5 mt-1.5 w-5 h-5 rounded-full bg-rose-100 border-2 border-white flex items-center justify-center shadow-sm">
-                      <div className="w-2 h-2 rounded-full bg-rose-600"></div>
-                    </div>
-                    <div className="pl-6">
-                      <p className="text-sm font-bold text-slate-900">Automatically Escalated</p>
-                      <p className="text-xs text-slate-500 font-medium mt-0.5">Oct 17, 2023 at 09:45 AM</p>
-                      <p className="text-sm text-rose-600 mt-2 font-medium bg-rose-50 p-2 rounded-lg border border-rose-100">SLA breached (48h). Reassigned to Director.</p>
-                    </div>
+                     <div className={`absolute -left-3.5 mt-1.5 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center shadow-sm ${expense.status === "Approved" ? "bg-emerald-100" : "bg-rose-100"}`}>
+                       <div className={`w-2 h-2 rounded-full ${expense.status === "Approved" ? "bg-emerald-600" : "bg-rose-600"}`}></div>
+                     </div>
+                     <div className="pl-6">
+                       <p className="text-sm font-bold text-slate-900">{expense.status}</p>
+                       <p className="text-xs text-slate-500 font-medium mt-0.5">Just now</p>
+                     </div>
                   </div>
                 )}
               </div>
