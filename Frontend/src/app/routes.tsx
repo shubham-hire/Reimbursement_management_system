@@ -5,8 +5,12 @@ import { SubmitExpense } from "./pages/SubmitExpense"
 import { MyExpenses } from "./pages/MyExpenses"
 import { ExpenseDetail } from "./pages/ExpenseDetail"
 import { ApprovalPage } from "./pages/Approval"
+import { Login } from "./pages/Login"
+import { Signup } from "./pages/Signup"
 
 export const router = createBrowserRouter([
+  { path: "/login", Component: Login },
+  { path: "/signup", Component: Signup },
   {
     path: "/",
     Component: Layout,
