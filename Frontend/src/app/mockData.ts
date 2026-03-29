@@ -112,3 +112,29 @@ export const mockPendingApprovals = [
     escalated: true,
   },
 ];
+
+export const mockRules = [
+  {
+    id: "RULE-01",
+    description: "Standard Employee Expenses",
+    isManagerApprover: true,
+    managerOverrideId: null,
+    flowType: "SEQUENTIAL",
+    minApprovalPercentage: 100,
+    approvers: [
+      { id: "APP-1", approverId: "Finance Team", isRequired: true, sequenceOrder: 1 }
+    ]
+  },
+  {
+    id: "RULE-02",
+    description: "High Value Equipment (> $2000)",
+    isManagerApprover: true,
+    managerOverrideId: "VP_ID_123",
+    flowType: "PARALLEL",
+    minApprovalPercentage: 50,
+    approvers: [
+      { id: "APP-2", approverId: "Finance Director", isRequired: true, sequenceOrder: 1 },
+      { id: "APP-3", approverId: "IT Manager", isRequired: false, sequenceOrder: 1 }
+    ]
+  }
+];
